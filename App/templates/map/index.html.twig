@@ -1,0 +1,193 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello MapController!{% endblock %}
+
+{% block body %}
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Simple Map</title>
+  <meta name="viewport" content="initial-scale=1.0">
+  <meta charset="utf-8">
+  <style>
+    /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+    #map {
+      width: 100%;
+      /* The width is the width of the web page */
+
+    }
+
+    /* Optional: Makes the sample page fill the window. */
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .tools {
+
+      width: 15vw;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="tools">
+      <select name="liste-ligne" id="liste-ligne" onchange="affichageLigne()">
+        <option value="all">Selectionnez une ligne</option>
+        </select>
+    </div>
+    <div id="map"></div>
+  </div>
+  <script>
+
+    (function listeLigneBus(){
+          fetch('https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-bus-topologie-lignes-td&rows=164&sort=id').then(function (response) {
+
+        return response.json();
+        }).then(function (obj) {
+
+          var listeLigne = obj.records;
+
+          listeLigne.map(function(bus,i){
+            console.log('test')
+            document.getElementById('liste-ligne').innerHTML+= "<option value=\""+bus.fields.nomcourt+"\">"+bus.fields.nomcourt+"</option>";
+          })
+          
+        })
+      })()
+
+   
+      function affichageLigne(){
+
+      var value = document.getElementById('liste-ligne').value;
+      initMap(value)
+    }
+
+
+
+    function initMap(lignedebus = 'all') {
+
+      fetch('https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-bus-vehicules-position-tr&rows=438&facet=numerobus&facet=nomcourtligne&facet=sens&facet=destination').then(function (response) {
+
+        return response.json();
+      }).then(function (obj) {
+
+        function attachSecretMessage(marker, secretMessage) {
+          var infowindow = new google.maps.InfoWindow({
+            content: secretMessage
+          });
+
+          marker.addListener('click', function() {
+            infowindow.open(marker.get('map'), marker);
+          });
+        }
+          var object = obj.records;
+
+
+          var mapOptions = {
+
+            zoom: 12,
+            minZoom: 12,
+            center: { lat: 48.112957, lng: -1.679196 },
+            mapTypeControl: false,
+            streetview: false,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            styles: [
+              { stylers: [{ visibility: 'simplified' }] },
+              { elementType: 'labels', stylers: [{ visibility: 'off' }] }
+            ]
+          };
+
+
+          var map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+          // Create an array of alphabetical characters used to label the markers.
+
+
+          // Add some markers to the map.
+          // Note: The code uses the JavaScript Array.prototype.map() method to
+          // create an array of markers based on a given "locations" array.
+          // The map() method here has nothing to do with the Google Maps API.
+          //var locations = obj.records
+          
+          var image = "https://img.icons8.com/ios-glyphs/30/000000/bus.png";
+          var markers = [];
+
+          object.map(function (bus, i) {
+
+            if(lignedebus === 'all' ){
+                        var location = new Object();
+                        location.lat = bus.fields.coordonnees[0];
+                        location.lng = bus.fields.coordonnees[1];
+                        var ligne = '';
+                        if (bus.fields.etat == 'En ligne') {
+                          console.log('enligne')
+                          ligne = bus.fields.nomcourtligne
+                        } else {
+                          ligne = 'HS';
+
+                        }
+                        var marker =  new google.maps.Marker({
+                          position: location,
+                          map: map,
+                          icon: image,
+                        });
+                        attachSecretMessage(marker,ligne)
+                        markers.push(marker);
+                      }
+                else{
+                    
+                  if(bus.fields.nomcourtligne === lignedebus){
+                    var location = new Object();
+                        location.lat = bus.fields.coordonnees[0];
+                        location.lng = bus.fields.coordonnees[1];
+                        var ligne = '';
+                        if (bus.fields.etat == 'En ligne') {
+                          ligne = bus.fields.nomcourtligne
+                        } else {
+                          ligne = 'HS';
+
+                        }
+                        var marker =  new google.maps.Marker({
+                          position: location,
+                          map: map,
+                          icon: image,
+                        });
+                        attachSecretMessage(marker,ligne)
+                        markers.push(marker)
+                      }
+                        else{
+                          return;
+                        }
+                        
+                  }
+          
+          });
+
+          // Add a marker clusterer to manage the markers.
+          
+         var markerCluster = new MarkerClusterer(map, markers,
+            { imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' });
+
+      })
+    }
+
+  </script>
+  <script src="/js/markerclusterer_compiled.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASr_7Fuqzie2LlD76xTbAW0liOXW9EhPc&callback=initMap"
+    async defer></script>
+</body>
+
+</html>
+{% endblock %}
