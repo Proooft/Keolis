@@ -11,15 +11,12 @@
   <meta name="viewport" content="initial-scale=1.0">
   <meta charset="utf-8">
   <style>
-    /* Always set the map height explicitly to define the size of the div
-       * element that contains the map. */
     #map {
       width: 100%;
-      /* The width is the width of the web page */
+
 
     }
 
-    /* Optional: Makes the sample page fill the window. */
     html,
     body {
       margin: 0;
@@ -43,33 +40,32 @@
 <body>
   <div class="app">
     <div class="tools">
+      <label for="liste-ligne">Choisissez une ligne</label>
       <select name="liste-ligne" id="liste-ligne" onchange="affichageLigne()">
-        <option value="all">Selectionnez une ligne</option>
-        </select>
+        <option value="all">Toute les lignes</option>
+      </select>
     </div>
     <div id="map"></div>
   </div>
   <script>
 
-    (function listeLigneBus(){
-          fetch('https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-bus-topologie-lignes-td&rows=164&sort=id').then(function (response) {
+    (function listeLigneBus() {
+      fetch('https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-bus-topologie-lignes-td&rows=164&sort=id').then(function (response) {
 
         return response.json();
-        }).then(function (obj) {
+      }).then(function (obj) {
 
-          var listeLigne = obj.records;
+        var listeLigne = obj.records;
 
-          listeLigne.map(function(bus,i){
-            console.log('test')
-            document.getElementById('liste-ligne').innerHTML+= "<option value=\""+bus.fields.nomcourt+"\">"+bus.fields.nomcourt+"</option>";
-          })
-          
+        listeLigne.map(function (bus, i) {
+          document.getElementById('liste-ligne').innerHTML += "<option value=\"" + bus.fields.nomcourt + "\">" + bus.fields.nomcourt + "</option>";
         })
-      })()
 
-   
-      function affichageLigne(){
+      })
+    })()
 
+
+    function affichageLigne() {
       var value = document.getElementById('liste-ligne').value;
       initMap(value)
     }
@@ -88,97 +84,92 @@
             content: secretMessage
           });
 
-          marker.addListener('click', function() {
+          marker.addListener('click', function () {
             infowindow.open(marker.get('map'), marker);
           });
         }
-          var object = obj.records;
+        var object = obj.records;
+        console.log(object)
 
 
-          var mapOptions = {
+        var mapOptions = {
 
-            zoom: 12,
-            minZoom: 12,
-            center: { lat: 48.112957, lng: -1.679196 },
-            mapTypeControl: false,
-            streetview: false,
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
-            styles: [
-              { stylers: [{ visibility: 'simplified' }] },
-              { elementType: 'labels', stylers: [{ visibility: 'off' }] }
-            ]
-          };
-
-
-          var map = new google.maps.Map(document.getElementById('map'), mapOptions);
-
-          // Create an array of alphabetical characters used to label the markers.
+          zoom: 12,
+          minZoom: 12,
+          center: { lat: 48.112957, lng: -1.679196 },
+          mapTypeControl: false,
+          streetview: false,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          styles: [
+            { stylers: [{ visibility: 'simplified' }] },
+            { elementType: 'labels', stylers: [{ visibility: 'off' }] }
+          ]
+        };
 
 
-          // Add some markers to the map.
-          // Note: The code uses the JavaScript Array.prototype.map() method to
-          // create an array of markers based on a given "locations" array.
-          // The map() method here has nothing to do with the Google Maps API.
-          //var locations = obj.records
-          
-          var image = "https://img.icons8.com/ios-glyphs/30/000000/bus.png";
-          var markers = [];
+        var map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
-          object.map(function (bus, i) {
+        var image = "https://img.icons8.com/ios-glyphs/30/000000/bus.png";
+        var markers = [];
 
-            if(lignedebus === 'all' ){
-                        var location = new Object();
-                        location.lat = bus.fields.coordonnees[0];
-                        location.lng = bus.fields.coordonnees[1];
-                        var ligne = '';
-                        if (bus.fields.etat == 'En ligne') {
-                          console.log('enligne')
-                          ligne = bus.fields.nomcourtligne
-                        } else {
-                          ligne = 'HS';
+        object.map(function (bus, i) {
 
-                        }
-                        var marker =  new google.maps.Marker({
-                          position: location,
-                          map: map,
-                          icon: image,
-                        });
-                        attachSecretMessage(marker,ligne)
-                        markers.push(marker);
-                      }
-                else{
-                    
-                  if(bus.fields.nomcourtligne === lignedebus){
-                    var location = new Object();
-                        location.lat = bus.fields.coordonnees[0];
-                        location.lng = bus.fields.coordonnees[1];
-                        var ligne = '';
-                        if (bus.fields.etat == 'En ligne') {
-                          ligne = bus.fields.nomcourtligne
-                        } else {
-                          ligne = 'HS';
+          //  console.log(bus.fields.nomcourtligne)
+          //console.log(lignedebus)
 
-                        }
-                        var marker =  new google.maps.Marker({
-                          position: location,
-                          map: map,
-                          icon: image,
-                        });
-                        attachSecretMessage(marker,ligne)
-                        markers.push(marker)
-                      }
-                        else{
-                          return;
-                        }
-                        
-                  }
-          
-          });
+          if (lignedebus === 'all') {
+            var location = new Object();
+            location.lat = bus.fields.coordonnees[0];
+            location.lng = bus.fields.coordonnees[1];
+            var ligne = '';
+            if (bus.fields.etat == 'En ligne') {
+              console.log('enligne')
+              ligne = bus.fields.nomcourtligne
+            } else {
+              ligne = 'HS';
 
-          // Add a marker clusterer to manage the markers.
-          
-         var markerCluster = new MarkerClusterer(map, markers,
-            { imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' });
+            }
+            var marker = new google.maps.Marker({
+              position: location,
+              map: map,
+              icon: image,
+            });
+            attachSecretMessage(marker, ligne)
+            markers.push(marker);
+          }
+          else {
+
+            if (bus.fields.nomcourtligne === lignedebus) {
+              var location = new Object();
+              location.lat = bus.fields.coordonnees[0];
+              location.lng = bus.fields.coordonnees[1];
+              var ligne = '';
+              if (bus.fields.etat == 'En ligne') {
+                ligne = bus.fields.nomcourtligne
+              } else {
+                ligne = 'HS';
+
+              }
+              var marker = new google.maps.Marker({
+                position: location,
+                map: map,
+                icon: image,
+              });
+              attachSecretMessage(marker, ligne)
+              markers.push(marker)
+            }
+            else {
+              return;
+            }
+
+          }
+
+        });
+
+        // Add a marker clusterer to manage the markers.
+
+        var markerCluster = new MarkerClusterer(map, markers,
+          { imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' });
 
       })
     }
